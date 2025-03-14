@@ -421,7 +421,7 @@ def render_img(objpath, texpath, envpath, resolution, output_paths):
     prepare_rendersettings(resolution)
     # Updated import for newer Blender
     # bpy.ops.import_scene.obj(filepath=objpath)
-    bpy.ops.wm.obj_import(filepath=objpath)
+    bpy.ops.wm.obj_import(filepath=objpath, forward_axis="Y")
 
     # Wait for import to complete and get the mesh name
     # In newer Blender, may need to iterate through objects to find the imported one
