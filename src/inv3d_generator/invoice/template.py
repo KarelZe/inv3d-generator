@@ -2,13 +2,13 @@ import random
 import re
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
 
 import bs4
 
-from .fake_content import InvoiceContent
-from .util import change_hue_randomly, xpath_soup, rgb_to_hex, color_range
 from ..util import check_file
+from .fake_content import InvoiceContent
+from .util import change_hue_randomly, color_range, rgb_to_hex, xpath_soup
 
 
 class Template:
@@ -30,22 +30,33 @@ class Template:
         def __hash__(self) -> int:
             return hash(self._xpath)
 
-    def __init__(self, template_file: Path, summary: Dict):
+    def __init__(self, template_file: Path, summary: dict):
         template = template_file.read_text()
         template = Template._replace_colors_randomly(template=template, summary=summary)
-        template = Template._replace_font_size_randomly(template=template, summary=summary)
+        template = Template._replace_font_size_randomly(
+            template=template, summary=summary
+        )
 
-        self.soup = bs4.BeautifulSoup(template, 'html.parser')
+        self.soup = bs4.BeautifulSoup(template, "html.parser")
 
         self.container_map = self._create_container_map()
-        self.attributes = [attribute
-                           for insertion_list in self.container_map.values()
-                           for insertion in insertion_list
-                           for attribute in re.findall(self.ATTRIBUTE_PATTERN, str(insertion))]
+        self.attributes = [
+            attribute
+            for insertion_list in self.container_map.values()
+            for insertion in insertion_list
+            for attribute in re.findall(self.ATTRIBUTE_PATTERN, str(insertion))
+        ]
 
-        self.num_products = max([int(subtag)
-                                 for attribute in self.attributes if attribute.startswith("products.")
-                                 for subtag in attribute.split(".") if subtag.isdigit()]) + 1
+        self.num_products = (
+            max(
+                int(subtag)
+                for attribute in self.attributes
+                if attribute.startswith("products.")
+                for subtag in attribute.split(".")
+                if subtag.isdigit()
+            )
+            + 1
+        )
 
         self.color_mapping = None
         self.template_file = template_file
@@ -63,7 +74,7 @@ class Template:
         return self.template_file.parent / (self.template_file.stem + "_files")
 
     @classmethod
-    def _replace_colors_randomly(cls, template: str, summary: Dict) -> str:
+    def _replace_colors_randomly(cls, template: str, summary: dict) -> str:
         color_map = {}
 
         def replace(match):
@@ -78,26 +89,28 @@ class Template:
         return result
 
     @classmethod
-    def _replace_font_size_randomly(cls, template: str, summary: Dict) -> str:
+    def _replace_font_size_randomly(cls, template: str, summary: dict) -> str:
         factor = random.uniform(0.8, 1.2)
         summary["font_scale"] = factor
 
         def replace(match):
             pt_size = float(match.groupdict()["size"])
             pt_size *= factor
-            return f"font-size:{str(pt_size)}pt"
+            return f"font-size:{pt_size!s}pt"
 
         return re.sub(pattern=cls.FONT_SIZE_PATTERN, repl=replace, string=template)
 
-    def _create_container_map(self) -> Dict["Container", List[bs4.NavigableString]]:
+    def _create_container_map(self) -> dict["Container", list[bs4.NavigableString]]:
         container_map = defaultdict(list)
         for insertion in self.soup.find_all(text=self.ATTRIBUTE_PATTERN):
-            container = insertion.find_parent('td')
+            container = insertion.find_parent("td")
             if container is None:
-                container = insertion.find_parent('p')  # fallback container
+                container = insertion.find_parent("p")  # fallback container
             if container is None:
                 container = insertion.parent
-                print(f"INFO: Insertion '{insertion}' outside of td or p element! Direct parent will be used!")
+                print(
+                    f"INFO: Insertion '{insertion}' outside of td or p element! Direct parent will be used!"
+                )
 
             container_map[self.Container(container)].append(insertion)
         return container_map
@@ -106,14 +119,16 @@ class Template:
         assert self.color_mapping is None, "Template was already filled!"
 
         # prepare replacement
-        all_colors = color_range(num_colors=len(self.attributes) + len(self.container_map))
+        all_colors = color_range(
+            num_colors=len(self.attributes) + len(self.container_map)
+        )
         color_mapping = color_mapping = defaultdict(dict)
 
         # function to add colors to container elements
         def process_container(element):
             color = all_colors.pop()
             element["data-color"] = rgb_to_hex(color)
-            element['class'] = element.get('class', []) + ['template_wrapper']
+            element["class"] = [*element.get("class", []), "template_wrapper"]
             return color
 
         # function to replace attribute placeholders and adds color information
@@ -121,8 +136,10 @@ class Template:
             def replace(match):
                 attribute = match.groupdict()["attribute"]
                 if attribute not in content.all_attributes:
-                    print(f"WARNING: No correspondence of attribute '{attribute}' in generated data!")
-                value = content.all_attributes[attribute] if attribute in content.all_attributes else "&nbsp;"
+                    print(
+                        f"WARNING: No correspondence of attribute '{attribute}' in generated data!"
+                    )
+                value = content.all_attributes.get(attribute, "&nbsp;")
                 value = "&nbsp;" if value is None else value
                 assert isinstance(value, str)
                 value = value.replace("\n", "<br>")
@@ -131,8 +148,10 @@ class Template:
                 color_mapping[parent_color][color] = attribute
                 return f"<span class='template_text' data-color='{rgb_to_hex(color)}'>{value}</span>"
 
-            filled_element_str = re.sub(pattern=self.ATTRIBUTE_PATTERN, repl=replace, string=str(element))
-            element.replaceWith(bs4.BeautifulSoup(filled_element_str, 'html.parser'))
+            filled_element_str = re.sub(
+                pattern=self.ATTRIBUTE_PATTERN, repl=replace, string=str(element)
+            )
+            element.replaceWith(bs4.BeautifulSoup(filled_element_str, "html.parser"))
 
         for container, insertions in self.container_map.items():
             container_color = process_container(container.value)
@@ -141,10 +160,12 @@ class Template:
 
         # add exclusion tag to spans
         for container in self.container_map:
-            for span in container.value.find_all('span'):
-                if span.text.strip() != '' and 'template_text' not in span.get('class', []):
-                    span["data-color"] = '#000000'
-                    span['class'] = span.get('class', []) + ['template_blocker']
+            for span in container.value.find_all("span"):
+                if span.text.strip() != "" and "template_text" not in span.get(
+                    "class", []
+                ):
+                    span["data-color"] = "#000000"
+                    span["class"] = [*span.get("class", []), "template_blocker"]
 
         self.color_mapping = color_mapping
 

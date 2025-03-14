@@ -8,12 +8,11 @@ from numpy import ma
 from scipy.interpolate import griddata
 from torch.nn import ReflectionPad2d
 
-from ..formats import save_npz, check_array, load_npz
+from ..formats import check_array, load_npz, save_npz
 from ..util import check_file, resize_image
 
 
 class WarpedCurvature:
-
     def __init__(self, data: np.ndarray):
         check_array(data, shape=(data.shape[0], data.shape[0], 1), dtype=np.float32)
 
@@ -30,7 +29,9 @@ class WarpedCurvature:
     def save(self, file: Path, override: bool = False):
         save_npz(file=file, data=self._data, override=override)
 
-    def visualize(self, file: Path, mask: np.ndarray, size: int, override: bool = False):
+    def visualize(
+        self, file: Path, mask: np.ndarray, size: int, override: bool = False
+    ):
         check_file(file, suffix=".png", exist=None if override else False)
         check_array(mask, shape=(self.resolution, self.resolution), dtype=np.bool8)
 
@@ -62,14 +63,18 @@ class WarpedCurvature:
         points[:, 0] = 1 - points[:, 0]
 
         # create grids with range zero to one to specify sample locations
-        grid_y, grid_x = np.mgrid[0:1:complex(0, 128), 0:1:complex(0, 128)]
+        grid_y, grid_x = np.mgrid[0 : 1 : complex(0, 128), 0 : 1 : complex(0, 128)]
 
         # fill in all sample locations not already specified by point-value pairs
-        mesh_3D = griddata(points=points, values=values, xi=(grid_y, grid_x), method='linear')
+        mesh_3D = griddata(
+            points=points, values=values, xi=(grid_y, grid_x), method="linear"
+        )
 
         # if values outside of complex hull from points are requested, fill them with nearest neighbour
         if np.isnan(mesh_3D).any():
-            extrapolation = griddata(points=points, values=values, xi=(grid_y, grid_x), method='nearest')
+            extrapolation = griddata(
+                points=points, values=values, xi=(grid_y, grid_x), method="nearest"
+            )
             mesh_3D = np.where(np.isnan(mesh_3D), extrapolation, mesh_3D)
 
         # pad mesh of 3D coordinates to handle edge cases
@@ -83,10 +88,14 @@ class WarpedCurvature:
         diff_3 = mesh_3D - mesh_3D_padded[:, :, :-2, 1:-1]
 
         # sum all differences
-        sum_diff = (diff_0 + diff_1 + diff_2 + diff_3)
+        sum_diff = diff_0 + diff_1 + diff_2 + diff_3
 
         # calculate curvature for all nodes in mesh
-        curvature = torch.linalg.norm(sum_diff, ord=2, dim=1, keepdim=False).unsqueeze(0).float()  # N=1, C=1 H_bm, W_bm
+        curvature = (
+            torch.linalg.norm(sum_diff, ord=2, dim=1, keepdim=False)
+            .unsqueeze(0)
+            .float()
+        )  # N=1, C=1 H_bm, W_bm
 
         # warp curvature map according to UV mapping
         uv = torch.from_numpy(uv).unsqueeze(0).float()

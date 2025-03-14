@@ -1,14 +1,14 @@
-'''
-Code for rendering the groundtruths of Doc3D dataset 
-https://www3.cs.stonybrook.edu/~cvl/projects/dewarpnet/storage/paper.pdf (ICCV 2019)
+"""Code for rendering the groundtruths of Doc3D dataset
+https://www3.cs.stonybrook.edu/~cvl/projects/dewarpnet/storage/paper.pdf (ICCV 2019).
 
-This code renders the normals using the .blend files 
-saved from render_mesh.py 
+This code renders the normals using the .blend files
+saved from render_mesh.py
 
 Written by: Sagnik Das
 Stony Brook University, New York
 January 2019
-'''
+"""
+
 import json
 import random
 import sys
@@ -18,17 +18,17 @@ import bpy
 
 
 def select_object(ob):
-    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action="DESELECT")
     bpy.context.scene.objects.active = None
     ob.select = True
     bpy.context.scene.objects.active = ob
 
 
 def render():
-    bpy.context.scene.camera = bpy.data.objects['Camera']
-    bpy.data.scenes['Scene'].render.image_settings.color_depth = '8'
-    bpy.data.scenes['Scene'].render.image_settings.color_mode = 'RGB'
-    bpy.data.scenes['Scene'].render.image_settings.compression = 0
+    bpy.context.scene.camera = bpy.data.objects["Camera"]
+    bpy.data.scenes["Scene"].render.image_settings.color_depth = "8"
+    bpy.data.scenes["Scene"].render.image_settings.color_mode = "RGB"
+    bpy.data.scenes["Scene"].render.image_settings.compression = 0
     bpy.ops.render.render(write_still=False)
 
 
@@ -50,11 +50,11 @@ def color_norm_material(obj, mat_name):
         nodes.remove(n)
 
     # Add an material output node
-    mat_node = nodes.new(type='ShaderNodeOutputMaterial')
+    mat_node = nodes.new(type="ShaderNodeOutputMaterial")
     # Add an emission node
-    em_node = nodes.new(type='ShaderNodeEmission')
+    em_node = nodes.new(type="ShaderNodeEmission")
     # Add a geometry node
-    geo_node = nodes.new(type='ShaderNodeNewGeometry')
+    geo_node = nodes.new(type="ShaderNodeNewGeometry")
 
     # Connect each other
     tree = mat.node_tree
@@ -73,10 +73,10 @@ def get_normal_img(img_name, output_dir):
         tree.nodes.remove(n)
 
     # create input render layer node
-    render_layers = tree.nodes.new('CompositorNodeRLayers')
+    render_layers = tree.nodes.new("CompositorNodeRLayers")
 
     file_output_node_0 = tree.nodes.new("CompositorNodeOutputFile")
-    file_output_node_0.format.file_format = 'OPEN_EXR'
+    file_output_node_0.format.file_format = "OPEN_EXR"
     file_output_node_0.base_path = output_dir
     file_output_node_0.file_slots[0].path = img_name
 
@@ -88,16 +88,16 @@ def prepare_no_env_render():
     for lamp in bpy.data.lamps:
         bpy.data.lamps.remove(lamp, do_unlink=True)
 
-    world = bpy.data.worlds['World']
+    world = bpy.data.worlds["World"]
     world.use_nodes = True
     links = world.node_tree.links
     # clear default nodes
-    for l in links:
-        links.remove(l)
-    scene = bpy.data.scenes['Scene']
+    for i in links:
+        links.remove(i)
+    scene = bpy.data.scenes["Scene"]
     scene.cycles.samples = 1
     scene.cycles.use_square_samples = True
-    scene.view_settings.view_transform = 'Default'
+    scene.view_settings.view_transform = "Default"
 
 
 def main():
@@ -116,7 +116,7 @@ def main():
 
     # render world coordinates
     prepare_no_env_render()
-    color_norm_material(mesh, 'nColor')
+    color_norm_material(mesh, "nColor")
     get_normal_img("norm.exr", config["output_dir"])
     render()
 
