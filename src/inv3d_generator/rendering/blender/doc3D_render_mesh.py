@@ -19,6 +19,7 @@ import random
 import string
 import sys
 from pathlib import Path
+from typing import Final
 
 import bmesh
 import bpy
@@ -27,6 +28,9 @@ from mathutils import Euler, Vector
 
 rridx = 1
 save_blend_file = True
+
+# increase for better image quality at the cost of rendering times.
+CYCLES_SAMPLES: Final[int] = 52
 
 
 def reset_blend():
@@ -94,7 +98,7 @@ def prepare_scene():
 
     scene = bpy.data.scenes["Scene"]
     scene.render.engine = "CYCLES"
-    scene.cycles.samples = 128
+    scene.cycles.samples = CYCLES_SAMPLES
     scene.cycles.use_square_samples = False
     scene.display_settings.display_device = "sRGB"
     if random.random() > 0.5:
@@ -150,10 +154,9 @@ def add_lighting(envp):
         wlinks.new(mapping.outputs[0], envnode.inputs[0])
         envnode.image = bpy.data.images.load(envp)
 
-        if envp.endswith(".exr"):  # The Laval Indoor HDR Dataset uses .exr
-            bg_node.inputs[1].default_value = random.uniform(30, 55)
-        else:
-            bg_node.inputs[1].default_value = random.uniform(0.4, 0.6)
+        # set intensity to be slightly lower or higher.
+        bg_node.inputs[1].default_value = random.uniform(0.8, 1.2)
+
         wlinks.new(envnode.outputs[0], bg_node.inputs[0])
     else:
         # point light
@@ -187,12 +190,12 @@ def add_lighting(envp):
             output_node = nodes.new(type="ShaderNodeOutputLight")
             links.new(lamp_node.outputs[0], output_node.inputs[0])
 
-        strngth = random.uniform(200, 500)
-        lamp_node.inputs[1].default_value = strngth
+        # strength = random.uniform(50, 100)
+        # lamp_node.inputs[1].default_value = strength
         # Change warmness of light to simulate more natural lighting
         bbody = nodes.new(type="ShaderNodeBlackbody")
-        color_temp = random.uniform(2700, 10200)
-        bbody.inputs[0].default_value = color_temp
+        # color_temp = random.uniform(2700, 10200)
+        # bbody.inputs[0].default_value = color_temp
         links.new(bbody.outputs[0], lamp_node.inputs[0])
 
 
@@ -373,7 +376,7 @@ def render_pass(obj, objpath, texpath, output_paths):
     file_output_node_img.base_path = str(output_paths["img"])
     file_output_node_img.file_slots[0].path = fn
     imglk = links.new(render_layers.outputs[0], file_output_node_img.inputs[0])
-    scene.cycles.samples = 128
+    scene.cycles.samples = CYCLES_SAMPLES
 
     # Render the image
     bpy.ops.render.render(write_still=False)

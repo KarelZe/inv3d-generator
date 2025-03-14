@@ -1,8 +1,7 @@
-"""Code for rendering the groundtruths of Doc3D dataset
+"""Code for rendering the ground truths of Doc3D dataset
 https://www3.cs.stonybrook.edu/~cvl/projects/dewarpnet/storage/paper.pdf (ICCV 2019).
 
-This code renders the depth maps using the .blend files
-saved from render_mesh.py
+This code renders the depth maps using the .blend files saved from render_mesh.py
 
 Written by: Sagnik Das
 Stony Brook University, New York
@@ -28,7 +27,6 @@ def render():
     bpy.context.scene.camera = bpy.data.objects["Camera"]
     bpy.data.scenes["Scene"].render.image_settings.color_depth = "8"
     bpy.data.scenes["Scene"].render.image_settings.color_mode = "RGB"
-    # bpy.data.scenes['Scene'].render.image_settings.file_format='OPEN_EXR'
     bpy.data.scenes["Scene"].render.image_settings.compression = 0
     bpy.ops.render.render(write_still=False)
 

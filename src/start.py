@@ -86,6 +86,8 @@ def main():
         "--settings_file", nargs="?", type=str, help="Path to the input settings file."
     )
 
+    # TODO: Fix stuff here.
+
     args = parser.parse_args()
     args.seed = 42
     args.assets_dir = "/home/markus/git/inv3d-generator/assets"

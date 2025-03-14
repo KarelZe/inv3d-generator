@@ -110,7 +110,6 @@ def main():
 
     bpy.ops.wm.read_factory_settings()
 
-    # load blend file
     bpy.ops.wm.open_mainfile(filepath=config["blender_file"])
     mesh = bpy.data.objects[bpy.data.meshes[0].name]
 

@@ -1,3 +1,5 @@
+"""Class with utility functions for saving files."""
+
 import json
 from pathlib import Path
 from typing import Optional, Union
