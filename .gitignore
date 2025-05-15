@@ -179,3 +179,5 @@ venv/
 assets/
 tmp_dir/
 out/
+augmented/
+tmp_dir_sample_001
