@@ -1,5 +1,12 @@
 # Inv3D Dataset Generation
 
+## usage
+
+```sh
+blender --background -noaudio --python /home/markus/git/inv3d-generator/src/inv3d_generator/rendering/blender/doc3D_render_mesh.py -- /home/markus/git/inv3d-generator/tmp_dir/blender_mesh_config.json
+```
+
+
 Create your own version of the Inv3D dataset!
 
 This repository contains the dataset generation code of our [paper](https://link.springer.com/article/10.1007/s10032-023-00434-x) which has been accepted at the International Conference on Document Analysis and Recognition ([ICDAR](https://icdar2023.org/)) 2023.

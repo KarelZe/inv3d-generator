@@ -5,12 +5,11 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from ..formats import check_array, load_npz, load_image, save_npz
+from ..formats import check_array, load_image, load_npz, save_npz
 from ..util import check_file, resize_image
 
 
 class WarpedTextMask:
-
     def __init__(self, data: np.ndarray):
         check_array(data, shape=(data.shape[0], data.shape[0], 1), dtype=np.bool8)
 
@@ -45,7 +44,13 @@ class WarpedTextMask:
         uv = load_npz(uv_file)
         text_only = load_image(text_only_file)
 
-        source = torch.from_numpy(text_only).unsqueeze(0).transpose(3, 2).transpose(2, 1).transpose(2, 3)  # N=1,C=3,W,H
+        source = (
+            torch.from_numpy(text_only)
+            .unsqueeze(0)
+            .transpose(3, 2)
+            .transpose(2, 1)
+            .transpose(2, 3)
+        )  # N=1,C=3,W,H
         source = 255 - source  # invert
         source = source.float()
 

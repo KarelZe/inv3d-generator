@@ -4,11 +4,11 @@ import cv2
 import numpy as np
 from scipy.interpolate import griddata
 
-from ..formats import load_npz, save_npz, check_array
+from ..formats import check_array, load_npz, save_npz
 from ..util import check_file, resize_image
 
-class BackwardMapping:
 
+class BackwardMapping:
     def __init__(self, data: np.ndarray):
         check_array(data, shape=(data.shape[0], data.shape[0], 2), dtype=np.float32)
         # channel 0: y-values
@@ -64,14 +64,20 @@ class BackwardMapping:
         assert points.shape == values.shape  # shape: (num_points, 2)
 
         # create grids with range zero to one to specify sample locations
-        grid_y, grid_x = np.mgrid[0:1:complex(0, resolution_bm), 0:1:complex(0, resolution_bm)]
+        grid_y, grid_x = np.mgrid[
+            0 : 1 : complex(0, resolution_bm), 0 : 1 : complex(0, resolution_bm)
+        ]
 
         # fill in all sample locations not already specified by point-value pairs
-        flow_grid = griddata(points=points, values=values, xi=(grid_y, grid_x), method='linear')
+        flow_grid = griddata(
+            points=points, values=values, xi=(grid_y, grid_x), method="linear"
+        )
 
         # if values outside of complex hull from points are requested, fill them with nearest neighbour
         if np.isnan(flow_grid).any() and extrapolate:
-            extrapolation = griddata(points=points, values=values, xi=(grid_y, grid_x), method='nearest')
+            extrapolation = griddata(
+                points=points, values=values, xi=(grid_y, grid_x), method="nearest"
+            )
             flow_grid = np.where(np.isnan(flow_grid), extrapolation, flow_grid)
 
         return BackwardMapping(data=flow_grid.astype("float32"))

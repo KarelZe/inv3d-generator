@@ -4,3 +4,48 @@ requires = [
     "wheel"
 ]
 build-backend = "setuptools.build_meta"
+
+
+
+[tool.ruff.lint]
+
+preview = true
+
+# See rules: https://beta.ruff.rs/docs/rules/
+select = [
+    "C",    # flake8-comprehensions
+    "F",    # pyflakes
+    "FURB", # refurb
+    "I",    # isort
+    "N",    # pep8-naming
+    "PGH",  # pygrep
+    "PIE",  # misc lints
+    "PT",   # pytest
+    "RET",  # return
+    "RUF",  # ruff-specific rules
+    "SIM",  # flake8-simplify
+    "UP",   # pyupgrade
+    "W",    # pycodestyle warnings
+]
+
+ignore = [
+    "E501",  # line too long, handled by black
+    "W191",  # tab identation
+    "N806",  # mostly used for matrices
+    "N812",  # mostly used for torch functional 
+    "C901",  # do not rewrite to complex functions
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["D104"]
+
+[tool.ruff.lint.isort]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+preview = true
+docstring-code-format = true
+docstring-code-line-length = 88
